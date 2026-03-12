@@ -1,24 +1,24 @@
 <?php
 /**
- * Plugin Name: FPD Catalog Elementor Widget
+ * Plugin Name: FPD Catalog V3
  * Description: Elementor widget that renders a visual product catalog grid compositing FPD base products and designs.
- * Version: 1.0.0
+ * Version: 3.0.0
  * Author: DigitalSorc
- * Text Domain: fpd-catalog-widget
+ * Text Domain: fpd-catalog-v3
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-define( 'FPD_CATALOG_WIDGET_VERSION', '1.0.0' );
-define( 'FPD_CATALOG_WIDGET_DIR', plugin_dir_path( __FILE__ ) );
-define( 'FPD_CATALOG_WIDGET_URL', plugin_dir_url( __FILE__ ) );
+define( 'FPD_CATALOG_V3_VERSION', '3.0.0' );
+define( 'FPD_CATALOG_V3_DIR', plugin_dir_path( __FILE__ ) );
+define( 'FPD_CATALOG_V3_URL', plugin_dir_url( __FILE__ ) );
 
 /**
  * Main Plugin Class
  */
-final class FPD_Catalog_Widget_Plugin {
+final class FPD_Catalog_V3_Plugin {
 
 	private static $_instance = null;
 
@@ -53,11 +53,11 @@ final class FPD_Catalog_Widget_Plugin {
 		}
 
 		// Include files
-		require_once FPD_CATALOG_WIDGET_DIR . 'includes/class-fpd-data-helper.php';
-		require_once FPD_CATALOG_WIDGET_DIR . 'includes/class-fpd-rest-api.php';
+		require_once FPD_CATALOG_V3_DIR . 'includes/class-fpd-data-helper.php';
+		require_once FPD_CATALOG_V3_DIR . 'includes/class-fpd-rest-api.php';
 
 		// Register REST API
-		$rest_api = new FPD_Catalog_REST_API();
+		$rest_api = new FPD_Catalog_V3_REST_API();
 		$rest_api->init();
 
 		// Register Widget
@@ -72,36 +72,36 @@ final class FPD_Catalog_Widget_Plugin {
 	}
 
 	public function init_widgets( $widgets_manager ) {
-		require_once FPD_CATALOG_WIDGET_DIR . 'includes/class-fpd-widget.php';
-		$widgets_manager->register( new FPD_Catalog_Widget() );
+		require_once FPD_CATALOG_V3_DIR . 'includes/class-fpd-widget.php';
+		$widgets_manager->register( new FPD_Catalog_V3_Widget() );
 	}
 
 	public function widget_styles() {
-		wp_register_style( 'fpd-catalog-widget-css', FPD_CATALOG_WIDGET_URL . 'assets/css/fpd-catalog-widget.css', [], FPD_CATALOG_WIDGET_VERSION );
+		wp_register_style( 'fpd-catalog-v3-css', FPD_CATALOG_V3_URL . 'assets/css/fpd-catalog-v3.css', [], FPD_CATALOG_V3_VERSION );
 	}
 
 	public function widget_scripts() {
-		wp_register_script( 'fpd-catalog-render-js', FPD_CATALOG_WIDGET_URL . 'assets/js/fpd-catalog-render.js', [ 'jquery' ], FPD_CATALOG_WIDGET_VERSION, true );
-		wp_register_script( 'fpd-catalog-filter-js', FPD_CATALOG_WIDGET_URL . 'assets/js/fpd-catalog-filter.js', [], FPD_CATALOG_WIDGET_VERSION, true );
+		wp_register_script( 'fpd-catalog-v3-render-js', FPD_CATALOG_V3_URL . 'assets/js/fpd-catalog-render.js', [ 'jquery' ], FPD_CATALOG_V3_VERSION, true );
+		wp_register_script( 'fpd-catalog-v3-filter-js', FPD_CATALOG_V3_URL . 'assets/js/fpd-catalog-filter.js', [], FPD_CATALOG_V3_VERSION, true );
         
-        wp_localize_script( 'fpd-catalog-render-js', 'fpdCatalogData', [
-            'restUrl' => esc_url_raw( rest_url( 'fpd-catalog/v1/items' ) ),
+        wp_localize_script( 'fpd-catalog-v3-render-js', 'fpdCatalogV3Data', [
+            'restUrl' => esc_url_raw( rest_url( 'fpd-catalog-v3/v1/items' ) ),
             'nonce'   => wp_create_nonce( 'wp_rest' ),
         ]);
 	}
     
     public function register_dynamic_tags( $dynamic_tags ) {
-        require_once FPD_CATALOG_WIDGET_DIR . 'includes/class-fpd-dynamic-tag.php';
-        $dynamic_tags->register( new FPD_Current_Filter_Label_Tag() );
+        require_once FPD_CATALOG_V3_DIR . 'includes/class-fpd-dynamic-tag.php';
+        $dynamic_tags->register( new FPD_Current_Filter_Label_Tag_V3() );
     }
 
 	public function admin_notice_missing_main_plugin() {
 		if ( isset( $_GET['activate'] ) ) unset( $_GET['activate'] );
 		$message = sprintf(
 			/* translators: 1: Plugin name 2: Elementor */
-			esc_html__( '"%1$s" requires "%2$s" to be installed and activated.', 'fpd-catalog-widget' ),
-			'<strong>' . esc_html__( 'FPD Catalog Elementor Widget', 'fpd-catalog-widget' ) . '</strong>',
-			'<strong>' . esc_html__( 'Elementor', 'fpd-catalog-widget' ) . '</strong>'
+			esc_html__( '"%1$s" requires "%2$s" to be installed and activated.', 'fpd-catalog-v3' ),
+			'<strong>' . esc_html__( 'FPD Catalog V3', 'fpd-catalog-v3' ) . '</strong>',
+			'<strong>' . esc_html__( 'Elementor', 'fpd-catalog-v3' ) . '</strong>'
 		);
 		printf( '<div class="notice notice-warning is-dismissible"><p>%1$s</p></div>', $message );
 	}
@@ -110,9 +110,9 @@ final class FPD_Catalog_Widget_Plugin {
 		if ( isset( $_GET['activate'] ) ) unset( $_GET['activate'] );
 		$message = sprintf(
 			/* translators: 1: Plugin name 2: Elementor 3: Required Elementor version */
-			esc_html__( '"%1$s" requires "%2$s" version %3$s or greater.', 'fpd-catalog-widget' ),
-			'<strong>' . esc_html__( 'FPD Catalog Elementor Widget', 'fpd-catalog-widget' ) . '</strong>',
-			'<strong>' . esc_html__( 'Elementor', 'fpd-catalog-widget' ) . '</strong>',
+			esc_html__( '"%1$s" requires "%2$s" version %3$s or greater.', 'fpd-catalog-v3' ),
+			'<strong>' . esc_html__( 'FPD Catalog V3', 'fpd-catalog-v3' ) . '</strong>',
+			'<strong>' . esc_html__( 'Elementor', 'fpd-catalog-v3' ) . '</strong>',
 			'3.5.0'
 		);
 		printf( '<div class="notice notice-warning is-dismissible"><p>%1$s</p></div>', $message );
@@ -122,13 +122,13 @@ final class FPD_Catalog_Widget_Plugin {
 		if ( isset( $_GET['activate'] ) ) unset( $_GET['activate'] );
 		$message = sprintf(
 			/* translators: 1: Plugin name 2: PHP 3: Required PHP version */
-			esc_html__( '"%1$s" requires "%2$s" version %3$s or greater.', 'fpd-catalog-widget' ),
-			'<strong>' . esc_html__( 'FPD Catalog Elementor Widget', 'fpd-catalog-widget' ) . '</strong>',
-			'<strong>' . esc_html__( 'PHP', 'fpd-catalog-widget' ) . '</strong>',
+			esc_html__( '"%1$s" requires "%2$s" version %3$s or greater.', 'fpd-catalog-v3' ),
+			'<strong>' . esc_html__( 'FPD Catalog V3', 'fpd-catalog-v3' ) . '</strong>',
+			'<strong>' . esc_html__( 'PHP', 'fpd-catalog-v3' ) . '</strong>',
 			'7.0'
 		);
 		printf( '<div class="notice notice-warning is-dismissible"><p>%1$s</p></div>', $message );
 	}
 }
 
-FPD_Catalog_Widget_Plugin::instance();
+FPD_Catalog_V3_Plugin::instance();

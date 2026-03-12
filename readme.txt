@@ -1,10 +1,10 @@
-=== FPD Catalog Elementor Widget ===
+=== FPD Catalog V3 ===
 Contributors: DigitalSorc
 Tags: elementor, fancy product designer, fpd, catalog, grid
 Requires at least: 5.0
 Tested up to: 6.4
 Requires PHP: 7.0
-Stable tag: 1.0.0
+Stable tag: 3.0.0
 License: GPLv2 or later
 
 Elementor widget that renders a visual product catalog grid compositing FPD base products and designs.
@@ -36,13 +36,13 @@ window.fpdCatalogUpdateFilter({
 ```
 
 ### WordPress Filter Hooks
-* `fpd_catalog_query_args`: Modify the query arguments before fetching items from the database.
+* `fpd_catalog_v3_query_args`: Modify the query arguments before fetching items from the database.
 
 == Installation ==
 
-1. Upload the `fpd-catalog-widget` folder to the `/wp-content/plugins/` directory.
+1. Upload the plugin files to the `/wp-content/plugins/fpd-catalog-v3` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Edit a page with Elementor and drag the "FPD Catalog" widget onto the page.
+3. Edit a page with Elementor and drag the "FPD Catalog V3" widget onto the page.
 
 == Known Limitations / TODOs ==
 
