@@ -41,7 +41,7 @@ final class FPD_Catalog_Widget_Plugin {
 		}
 
 		// Check for minimum Elementor version
-		if ( ! version_compare( ELEMENTOR_VERSION, '3.0.0', '>=' ) ) {
+		if ( ! version_compare( ELEMENTOR_VERSION, '3.5.0', '>=' ) ) {
 			add_action( 'admin_notices', [ $this, 'admin_notice_minimum_elementor_version' ] );
 			return;
 		}
@@ -91,16 +91,7 @@ final class FPD_Catalog_Widget_Plugin {
 	}
     
     public function register_dynamic_tags( $dynamic_tags ) {
-        // Simple dynamic tag for filter label
-        class FPD_Current_Filter_Label_Tag extends \Elementor\Core\DynamicTags\Tag {
-            public function get_name() { return 'fpd_current_filter_label'; }
-            public function get_title() { return __( 'FPD Current Filter Label', 'fpd-catalog-widget' ); }
-            public function get_group() { return 'site'; }
-            public function get_categories() { return [ \Elementor\Modules\DynamicTags\Module::TEXT_CATEGORY ]; }
-            public function render() {
-                echo '<span class="fpd-dynamic-filter-label"></span>';
-            }
-        }
+        require_once FPD_CATALOG_WIDGET_DIR . 'includes/class-fpd-dynamic-tag.php';
         $dynamic_tags->register( new FPD_Current_Filter_Label_Tag() );
     }
 
@@ -122,7 +113,7 @@ final class FPD_Catalog_Widget_Plugin {
 			esc_html__( '"%1$s" requires "%2$s" version %3$s or greater.', 'fpd-catalog-widget' ),
 			'<strong>' . esc_html__( 'FPD Catalog Elementor Widget', 'fpd-catalog-widget' ) . '</strong>',
 			'<strong>' . esc_html__( 'Elementor', 'fpd-catalog-widget' ) . '</strong>',
-			'3.0.0'
+			'3.5.0'
 		);
 		printf( '<div class="notice notice-warning is-dismissible"><p>%1$s</p></div>', $message );
 	}
