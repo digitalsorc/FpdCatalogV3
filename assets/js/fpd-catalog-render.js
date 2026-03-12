@@ -7,7 +7,7 @@
     class FPDCatalogRenderer {
         constructor($wrapper) {
             this.$wrapper = $wrapper;
-            this.$grid = $wrapper.find('.fpd-catalog-grid');
+            this.$grid = $wrapper.find('.fpd-catalog-grid, .fpd-catalog-masonry');
             this.$loader = $wrapper.find('.fpd-catalog-loader');
             this.config = $wrapper.data('config');
             this.page = 1;
@@ -15,6 +15,7 @@
             this.hasMore = true;
             this.currentFilters = {
                 category: this.config.categories ? this.config.categories.join(',') : '',
+                designs: this.config.designs ? this.config.designs.join(',') : '',
                 base_product: this.config.baseProducts ? this.config.baseProducts.join(',') : '',
                 orderby: this.config.orderBy,
                 order: this.config.order
@@ -54,7 +55,9 @@
 
             try {
                 const params = new URLSearchParams({
+                    source: this.config.source || 'all',
                     category: this.currentFilters.category || '',
+                    designs: this.currentFilters.designs || '',
                     base_product: this.currentFilters.base_product || '',
                     orderby: this.currentFilters.orderby || 'date',
                     order: this.currentFilters.order || 'DESC',
@@ -132,16 +135,16 @@
             $wrapper.append($baseImg);
 
             if (item.printing_box && item.design_image_url) {
-                // Calculate percentages based on base image natural size once loaded
+                // Calculate percentages based on stage size
                 $baseImg.on('load', function() {
-                    const natWidth = this.naturalWidth;
-                    const natHeight = this.naturalHeight;
-                    
                     const pb = item.printing_box;
-                    const leftPct = (pb.x / natWidth) * 100;
-                    const topPct = (pb.y / natHeight) * 100;
-                    const widthPct = (pb.width / natWidth) * 100;
-                    const heightPct = (pb.height / natHeight) * 100;
+                    const stageWidth = pb.stage_width || this.naturalWidth;
+                    const stageHeight = pb.stage_height || this.naturalHeight;
+                    
+                    const leftPct = (pb.x / stageWidth) * 100;
+                    const topPct = (pb.y / stageHeight) * 100;
+                    const widthPct = (pb.width / stageWidth) * 100;
+                    const heightPct = (pb.height / stageHeight) * 100;
 
                     const $designImg = $(`<img src="${item.design_image_url}" class="fpd-design-img" alt="Design" crossorigin="anonymous">`);
                     $designImg.css({
@@ -177,15 +180,18 @@
             
             try {
                 const baseImg = await this.loadImage(item.base_product_image_url);
-                canvas.width = baseImg.width;
-                canvas.height = baseImg.height;
+                const pb = item.printing_box;
+                const stageWidth = pb ? (pb.stage_width || baseImg.width) : baseImg.width;
+                const stageHeight = pb ? (pb.stage_height || baseImg.height) : baseImg.height;
+                
+                canvas.width = stageWidth;
+                canvas.height = stageHeight;
                 
                 // Draw base product
-                ctx.drawImage(baseImg, 0, 0);
+                ctx.drawImage(baseImg, 0, 0, stageWidth, stageHeight);
 
                 if (item.printing_box && item.design_image_url) {
                     const designImg = await this.loadImage(item.design_image_url);
-                    const pb = item.printing_box;
                     
                     // Scale design to fit printing box width
                     let dWidth = pb.width;

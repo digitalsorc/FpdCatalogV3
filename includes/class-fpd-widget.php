@@ -49,6 +49,7 @@ class FPD_Catalog_V3_Widget extends \Elementor\Widget_Base {
 					'all'  => __( 'All Designs', 'fpd-catalog-v3' ),
 					'category' => __( 'By Category', 'fpd-catalog-v3' ),
 					'base_product' => __( 'By Base Product', 'fpd-catalog-v3' ),
+					'specific_designs' => __( 'Specific Designs', 'fpd-catalog-v3' ),
 				],
 			]
 		);
@@ -77,6 +78,20 @@ class FPD_Catalog_V3_Widget extends \Elementor\Widget_Base {
 				'options' => $categories,
 				'condition' => [
 					'fpd_source' => 'category',
+				],
+			]
+		);
+
+        $designs_list = FPD_Data_Helper_V3::get_all_designs_list();
+		$this->add_control(
+			'fpd_designs_select',
+			[
+				'label' => __( 'Specific Designs', 'fpd-catalog-v3' ),
+				'type' => \Elementor\Controls_Manager::SELECT2,
+				'multiple' => true,
+				'options' => $designs_list,
+				'condition' => [
+					'fpd_source' => 'specific_designs',
 				],
 			]
 		);
@@ -157,6 +172,19 @@ class FPD_Catalog_V3_Widget extends \Elementor\Widget_Base {
 			]
 		);
 
+		$this->add_control(
+			'layout_type',
+			[
+				'label' => __( 'Layout', 'fpd-catalog-v3' ),
+				'type' => \Elementor\Controls_Manager::SELECT,
+				'default' => 'grid',
+				'options' => [
+					'grid' => __( 'Grid', 'fpd-catalog-v3' ),
+					'masonry' => __( 'Masonry (CSS Columns)', 'fpd-catalog-v3' ),
+				],
+			]
+		);
+
 		$this->add_responsive_control(
 			'columns',
 			[
@@ -175,6 +203,7 @@ class FPD_Catalog_V3_Widget extends \Elementor\Widget_Base {
 				],
 				'selectors' => [
 					'{{WRAPPER}} .fpd-catalog-grid' => 'grid-template-columns: repeat({{VALUE}}, 1fr);',
+					'{{WRAPPER}} .fpd-catalog-masonry' => 'column-count: {{VALUE}};',
 				],
 			]
 		);
@@ -191,7 +220,41 @@ class FPD_Catalog_V3_Widget extends \Elementor\Widget_Base {
 				'default' => [ 'unit' => 'px', 'size' => 20 ],
 				'selectors' => [
 					'{{WRAPPER}} .fpd-catalog-grid' => 'gap: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .fpd-catalog-masonry' => 'column-gap: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .fpd-catalog-masonry .fpd-catalog-card' => 'margin-bottom: {{SIZE}}{{UNIT}};',
 				],
+			]
+		);
+
+		$this->add_control(
+			'card_bg_color',
+			[
+				'label' => __( 'Card Background', 'fpd-catalog-v3' ),
+				'type' => \Elementor\Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .fpd-catalog-card' => 'background-color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'card_border_radius',
+			[
+				'label' => __( 'Border Radius', 'fpd-catalog-v3' ),
+				'type' => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => [ 'px', '%', 'em' ],
+				'selectors' => [
+					'{{WRAPPER}} .fpd-catalog-card' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Box_Shadow::get_type(),
+			[
+				'name' => 'card_box_shadow',
+				'label' => __( 'Box Shadow', 'fpd-catalog-v3' ),
+				'selector' => '{{WRAPPER}} .fpd-catalog-card',
 			]
 		);
 
@@ -251,11 +314,22 @@ class FPD_Catalog_V3_Widget extends \Elementor\Widget_Base {
 	protected function render() {
 		$settings = $this->get_settings_for_display();
 
+        global $wpdb;
+        $tables = $wpdb->get_results("SHOW TABLES LIKE '%fpd%'");
+        file_put_contents(ABSPATH . 'fpd_tables.txt', print_r($tables, true));
+        
+        $designs = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}fpd_designs LIMIT 5");
+        file_put_contents(ABSPATH . 'fpd_designs_sample.txt', print_r($designs, true));
+        
+        $cats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}fpd_categories LIMIT 5");
+        file_put_contents(ABSPATH . 'fpd_cats_sample.txt', print_r($cats, true));
+
 		$widget_id = $this->get_id();
 		
 		$config = [
 			'source' => $settings['fpd_source'],
 			'categories' => $settings['fpd_design_categories'],
+			'designs' => isset($settings['fpd_designs_select']) ? $settings['fpd_designs_select'] : [],
 			'baseProducts' => $settings['fpd_base_products'],
 			'perPage' => $settings['posts_per_page'],
 			'orderBy' => $settings['orderby'],
@@ -271,9 +345,11 @@ class FPD_Catalog_V3_Widget extends \Elementor\Widget_Base {
 		$this->add_render_attribute( 'wrapper', 'class', 'fpd-catalog-wrapper' );
 		$this->add_render_attribute( 'wrapper', 'data-config', wp_json_encode( $config ) );
 
+		$layout_class = 'fpd-catalog-' . (isset($settings['layout_type']) ? $settings['layout_type'] : 'grid');
+
 		?>
 		<div <?php $this->print_render_attribute_string( 'wrapper' ); ?>>
-			<div class="fpd-catalog-grid" id="fpd-catalog-grid-<?php echo esc_attr( $widget_id ); ?>">
+			<div class="<?php echo esc_attr($layout_class); ?>" id="fpd-catalog-grid-<?php echo esc_attr( $widget_id ); ?>">
 				<!-- Items will be rendered here by JS -->
 			</div>
 			<div class="fpd-catalog-loader" style="display: none;">

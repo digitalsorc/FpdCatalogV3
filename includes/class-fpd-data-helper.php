@@ -46,31 +46,80 @@ class FPD_Data_Helper_V3 {
         return $categories;
     }
 
+    public static function get_all_designs_list() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'fpd_designs';
+        
+        $suppress = $wpdb->suppress_errors( true );
+        $results = $wpdb->get_results( "SELECT ID, title FROM {$table_name} ORDER BY title ASC" );
+        $wpdb->suppress_errors( $suppress );
+
+        $designs = [];
+        if ( is_array( $results ) ) {
+            foreach ( $results as $row ) {
+                $designs[ $row->ID ] = $row->title;
+            }
+        }
+        return $designs;
+    }
+
     public static function get_printing_box( $base_product_id ) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'fpd_views';
         
         $suppress = $wpdb->suppress_errors( true );
-        $view = $wpdb->get_row( $wpdb->prepare( "SELECT elements FROM {$table_name} WHERE product_id = %d ORDER BY view_order ASC LIMIT 1", $base_product_id ) );
+        $view = $wpdb->get_row( $wpdb->prepare( "SELECT elements, options FROM {$table_name} WHERE product_id = %d ORDER BY view_order ASC LIMIT 1", $base_product_id ) );
         $wpdb->suppress_errors( $suppress );
         
+        $stage_width = 800;
+        $stage_height = 800;
+        
+        if ( $view && ! empty( $view->options ) ) {
+            $options = is_string($view->options) ? json_decode($view->options, true) : $view->options;
+            if (isset($options['stageWidth'])) $stage_width = floatval($options['stageWidth']);
+            if (isset($options['stageHeight'])) $stage_height = floatval($options['stageHeight']);
+        }
+
         if ( $view && ! empty( $view->elements ) ) {
-            $elements = json_decode( $view->elements, true );
+            $elements = is_string($view->elements) ? json_decode( $view->elements, true ) : $view->elements;
             if ( is_array( $elements ) ) {
                 foreach ( $elements as $element ) {
-                    if ( isset( $element['title'] ) && strtolower( $element['title'] ) === 'printing box' ) {
+                    if ( isset( $element['title'] ) && stripos( $element['title'], 'printing box' ) !== false ) {
+                        $left = isset($element['parameters']['left']) ? floatval($element['parameters']['left']) : 0;
+                        $top = isset($element['parameters']['top']) ? floatval($element['parameters']['top']) : 0;
+                        $width = isset($element['parameters']['width']) ? floatval($element['parameters']['width']) : 100;
+                        $height = isset($element['parameters']['height']) ? floatval($element['parameters']['height']) : 100;
+                        $originX = isset($element['parameters']['originX']) ? $element['parameters']['originX'] : 'left';
+                        $originY = isset($element['parameters']['originY']) ? $element['parameters']['originY'] : 'top';
+
+                        if ($originX === 'center') {
+                            $left = $left - ($width / 2);
+                        }
+                        if ($originY === 'center') {
+                            $top = $top - ($height / 2);
+                        }
+
                         return [
-                            'x' => isset($element['parameters']['left']) ? floatval($element['parameters']['left']) : 0,
-                            'y' => isset($element['parameters']['top']) ? floatval($element['parameters']['top']) : 0,
-                            'width' => isset($element['parameters']['width']) ? floatval($element['parameters']['width']) : 100,
-                            'height' => isset($element['parameters']['height']) ? floatval($element['parameters']['height']) : 100,
+                            'x' => $left,
+                            'y' => $top,
+                            'width' => $width,
+                            'height' => $height,
+                            'stage_width' => $stage_width,
+                            'stage_height' => $stage_height
                         ];
                     }
                 }
             }
         }
         
-        return ['x' => 0, 'y' => 0, 'width' => 100, 'height' => 100];
+        return [
+            'x' => 0, 
+            'y' => 0, 
+            'width' => $stage_width, 
+            'height' => $stage_height,
+            'stage_width' => $stage_width,
+            'stage_height' => $stage_height
+        ];
     }
     
     public static function get_base_product_image( $base_product_id ) {
@@ -93,6 +142,11 @@ class FPD_Data_Helper_V3 {
 
         if ( ! empty( $args['category'] ) ) {
             $where[] = "category_id IN (" . implode(',', array_map('intval', (array)$args['category'])) . ")";
+        }
+
+        if ( ! empty( $args['source'] ) && $args['source'] === 'specific_designs' && ! empty( $args['designs'] ) ) {
+            $designs_arr = is_string($args['designs']) ? explode(',', $args['designs']) : (array)$args['designs'];
+            $where[] = "ID IN (" . implode(',', array_map('intval', $designs_arr)) . ")";
         }
 
         $where_clause = implode( ' AND ', $where );
